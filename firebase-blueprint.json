@@ -1,0 +1,151 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "System user (Admin, Doctor or Receptionist)",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "doctor", "receptionist"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "role"]
+    },
+    "ClinicSettings": {
+      "title": "Clinic Settings",
+      "description": "Global clinic configurations",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "address": { "type": "string" },
+        "phone": { "type": "string" },
+        "defaultPrice": { "type": "number" },
+        "doctorName": { "type": "string" },
+        "language": { "type": "string", "enum": ["ar", "en"] },
+        "theme": { "type": "string", "enum": ["light", "dark"] }
+      }
+    },
+    "Patient": {
+      "title": "Patient",
+      "description": "Patient information",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "age": { "type": "number" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" },
+        "medicalHistory": { "type": "string" },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "url": { "type": "string" },
+              "type": { "type": "string" },
+              "date": { "type": "string", "format": "date-time" }
+            }
+          }
+        },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "phone"]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "description": "Patient visit appointment",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string" },
+        "patientName": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "time": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "completed", "cancelled"] },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["patientId", "date", "time", "status"]
+    },
+    "MedicalRecord": {
+      "title": "Medical Record",
+      "description": "Details of a patient visit",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string" },
+        "visitDate": { "type": "string", "format": "date-time" },
+        "diagnosis": { "type": "string" },
+        "treatment": { "type": "string" },
+        "prescription": { "type": "string" },
+        "doctorId": { "type": "string" }
+      },
+      "required": ["patientId", "diagnosis", "doctorId"]
+    },
+    "Invoice": {
+      "title": "Invoice",
+      "description": "Billing record for a visit",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string" },
+        "patientName": { "type": "string" },
+        "amount": { "type": "number" },
+        "date": { "type": "string", "format": "date-time" },
+        "paymentMethod": { "type": "string", "enum": ["cash", "transfer", "insurance"] },
+        "status": { "type": "string", "enum": ["paid", "unpaid"] }
+      },
+      "required": ["patientId", "amount", "status"]
+    },
+    "Examination": {
+      "title": "Examination",
+      "description": "Daily patient examinations and vitals",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string" },
+        "patientName": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "type": { "type": "string" },
+        "vitals": {
+          "type": "object",
+          "properties": {
+            "weight": { "type": "string" },
+            "height": { "type": "string" },
+            "bloodPressure": { "type": "string" },
+            "pulse": { "type": "string" },
+            "temperature": { "type": "string" }
+          }
+        },
+        "complaint": { "type": "string" },
+        "findings": { "type": "string" },
+        "diagnosis": { "type": "string" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["patientId", "complaint", "createdAt"]
+    },
+    "Expense": {
+      "title": "Expense",
+      "description": "Operational expense for the clinic",
+      "type": "object",
+      "properties": {
+        "category": { "type": "string" },
+        "amount": { "type": "number" },
+        "description": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["category", "amount", "date"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": { "schema": "User", "description": "System users collection" },
+    "/settings/{settingId}": { "schema": "ClinicSettings", "description": "Clinic configurations" },
+    "/patients/{patientId}": { "schema": "Patient", "description": "Patients database" },
+    "/appointments/{appointmentId}": { "schema": "Appointment", "description": "Booking schedule" },
+    "/medicalRecords/{recordId}": { "schema": "MedicalRecord", "description": "Visit history" },
+    "/invoices/{invoiceId}": { "schema": "Invoice", "description": "Financial records" },
+    "/examinations/{examId}": { "schema": "Examination", "description": "Daily patient exams" },
+    "/expenses/{expenseId}": { "schema": "Expense", "description": "Operational expenses" }
+  }
+}

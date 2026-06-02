@@ -1,0 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@200..900&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Tajawal:wght@200;300;400;500;700;800;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Cairo", "Tajawal", "IBM Plex Sans Arabic", ui-sans-serif, system-ui, sans-serif;
+  --font-tajawal: "Tajawal", sans-serif;
+  --color-primary: #0284c7;
+  --color-primary-light: #e0f2fe;
+  --color-bg-main: #f8fafc;
+  --color-border-main: #e2e8f0;
+  --color-text-main: #1e293b;
+  --color-text-muted: #64748b;
+
+  --color-border: var(--color-border-main);
+  
+  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-float: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --color-bg-main: #f8fafc;
+  --color-bg-card: #ffffff;
+  --color-text-main: #1e293b;
+  --color-border-main: #e2e8f0;
+}
+
+.dark {
+  --color-bg-main: #020617;
+  --color-bg-card: #0f172a;
+  --color-text-main: #f8fafc;
+  --color-border-main: #1e293b;
+  --color-primary-light: #0c4a6e;
+}
+
+@layer base {
+  body {
+    @apply antialiased text-text-main bg-bg-main transition-colors duration-300;
+    direction: rtl;
+  }
+  
+  /* Auto-apply to cards that use bg-white if we use variables */
+  .bg-white {
+    background-color: var(--color-bg-card) !important;
+  }
+  .bg-slate-50 {
+    background-color: color-mix(in srgb, var(--color-bg-main) 80%, transparent) !important;
+  }
+  .text-slate-900 {
+    color: var(--color-text-main) !important;
+  }
+}

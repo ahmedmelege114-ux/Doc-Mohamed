@@ -1,0 +1,125 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 0. Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    
+    function isAdmin() { 
+      return isSignedIn() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             getUserRole() == 'admin'; 
+    }
+
+    // --- Global Admin Access ---
+    match /{document=**} {
+      allow read, write: if isSignedIn() && 
+                          exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+                          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isDoctor() { return isSignedIn() && (isAdmin() || getUserRole() == 'doctor'); }
+    function isReceptionist() { return isSignedIn() && (isAdmin() || getUserRole() == 'receptionist'); }
+    function isStaff() { return isSignedIn() && (isAdmin() || getUserRole() in ['doctor', 'receptionist']); }
+
+    // --- User Rules ---
+    match /users/{userId} {
+      allow get: if isSignedIn();
+      allow create: if isAdmin() || (
+                      isSignedIn() && isOwner(userId) && 
+                      incoming().role in ['admin', 'doctor', 'receptionist'] &&
+                      incoming().keys().hasAll(['uid', 'name', 'role']) &&
+                      incoming().uid == userId
+                    );
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+      allow list: if isStaff();
+    }
+
+    // --- Clinic Settings ---
+    match /settings/{settingId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // --- Config Rules (Permissions, etc) ---
+    match /config/{configId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // --- Patient Rules ---
+    match /patients/{patientId} {
+      allow read, list: if isStaff();
+      allow create: if isStaff() && 
+                      incoming().keys().hasAll(['name', 'phone']) &&
+                      incoming().name is string && incoming().name.size() < 200;
+      allow update: if isStaff();
+      allow delete: if isDoctor();
+    }
+
+    // --- Appointment Rules ---
+    match /appointments/{appointmentId} {
+      allow read, list: if isStaff();
+      allow create: if isStaff() && 
+                      incoming().keys().hasAll(['patientId', 'date', 'time', 'status']) &&
+                      isValidId(incoming().patientId);
+      allow update: if isStaff();
+      allow delete: if isStaff();
+    }
+
+    // --- Medical Record Rules ---
+    // Only Doctors can create/update medical records
+    match /medicalRecords/{recordId} {
+      allow read, list: if isStaff();
+      allow create: if isDoctor() &&
+                      incoming().keys().hasAll(['patientId', 'diagnosis', 'doctorId']) &&
+                      incoming().doctorId == request.auth.uid;
+      allow update: if isAdmin() || (isDoctor() && existing().doctorId == request.auth.uid);
+      allow delete: if isDoctor();
+    }
+
+    // --- Invoice Rules ---
+    match /invoices/{invoiceId} {
+      allow read, list: if isStaff();
+      allow create: if isStaff() &&
+                      incoming().keys().hasAll(['patientId', 'amount', 'status']);
+      allow update: if isStaff();
+      allow delete: if isStaff();
+    }
+
+    // --- Expense Rules ---
+    match /expenses/{expenseId} {
+      allow read, list: if isStaff();
+      allow create: if isStaff() &&
+                      incoming().keys().hasAll(['category', 'amount', 'date']);
+      allow update: if isStaff();
+      allow delete: if isStaff();
+    }
+
+    // --- Examination Rules ---
+    match /examinations/{examId} {
+      allow read, list: if isStaff();
+      allow create, update: if isStaff();
+      allow delete: if isDoctor();
+    }
+
+    // --- Backup Rules ---
+    match /backups/{backupId} {
+      allow read, write, list: if isAdmin();
+    }
+  }
+}
